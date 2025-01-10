@@ -18,21 +18,31 @@ Your task is to transform the following medical case into {tweetCount} insightfu
 
 Guidelines:
 - Each tweet must be under 280 characters
+- Each tweet should be a standalone insight (no X/Y numbering)
+- Do not include any meta-information about the tweets themselves
 - Make complex concepts simple but never simplistic
 - Connect pathophysiology to practical clinical decision-making
 - Remember the human elements of the case
 - Use memorable analogies where helpful (like Feynman would)
-- Include relevant hashtags ONLY where appropriate (e.g. #MedTwitter #MedEd). 
+- Include relevant hashtags ONLY where appropriate (e.g. #MedTwitter #MedEd)
 - Use British English spelling and grammar
-- For the final tweet, cite 1-2 seminal papers or high-impact case reports from reputable journals (preferably open access)
-- Use DOI links where possible for citations
-- Consider linking to relevant clinical guidelines from major medical societies
+- Don't use abbreviations like 'pathophy' for 'pathophysiology'. But DO use acronyms like DIC for 'disseminated intravascular coagulation'
+
+For references:
+- The final tweet should start with "📚 Want to dive deeper?"
+- Format guidelines exactly like this:
+  NICE Sepsis Guidelines (2023): https://www.nice.org.uk/guidance/ng51
+  RCPCH Sepsis Pathway (2022): https://www.rcpch.ac.uk/resources/sepsis-guidance
+- Only use verified, current guidelines from major medical societies
+- Never generate or guess at URLs
+- Limit to 2-3 highly reliable guidelines
+- Do not include any notes or explanations about the URLs
 
 {focusAreaPrompt}
 
 Case Report: {caseReport}
 
-Generate {tweetCount} educational tweets that weave together the science and humanity of this case, followed by one final tweet with carefully selected references for further learning.`;
+Generate {tweetCount} educational tweets followed by one reference tweet.`;
 
 // Medical Tweet Generation Service
 export class ClaudeService {
@@ -89,10 +99,18 @@ export class ClaudeService {
         .map(block => block.text)
         .join('\n\n');
 
-      // Split the response into individual tweets
-      const tweets = response.split('\n')
-        .filter(tweet => tweet.trim().length > 0)
-        .map(tweet => tweet.replace(/^\d+\.\s*/, '').trim()); // Remove numbering if present
+      // First split by double newlines to separate tweets
+      const rawTweets = response.split(/\n{2,}/)
+        .filter(tweet => tweet.trim().length > 0);
+
+      // Then clean up each tweet
+      const tweets = rawTweets
+        .map(tweet => tweet
+          .replace(/^(?:\d+\/\d+|\d+\.|Tweet \d+:)\s*/, '')
+          .replace(/\[.*?\]/g, '') // Remove any notes in square brackets
+          .trim()
+        )
+        .filter(tweet => !tweet.startsWith('Here are') && !tweet.includes('educational tweets')); // Remove meta information
 
       return {
         tweets: tweets.length > 0 ? tweets : ['No tweets generated']

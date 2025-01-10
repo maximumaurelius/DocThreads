@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import React from 'react'
 import { ClaudeService } from './services/claude'
 
 function App() {
@@ -34,7 +35,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <h1 className="text-4xl font-extrabold text-center mb-2 text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
           Content Remixer
         </h1>
@@ -92,10 +93,37 @@ function App() {
                 Generated Tweets:
                 <span className="ml-1">✨</span>
               </label>
-              <div className="mt-1 p-6 bg-white/90 rounded-xl border border-gray-200 shadow-sm space-y-3">
+              <div className="mt-1 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-10">
                 {tweets.map((tweet, index) => (
-                  <div key={index} className="text-gray-800">
-                    {tweet}
+                  <div key={index}>
+                    <h3 className="text-gray-700 mb-3">Tweet {index + 1}:</h3>
+                    {tweet && (
+                      <div className="rounded-lg border border-gray-200 bg-white p-4">
+                        <div className="flex flex-col w-full">
+                          <div className="flex justify-between items-start gap-4">
+                            <div className="text-gray-800 whitespace-pre-line">
+                              {tweet.split('https://').map((part, i) => 
+                                i === 0 ? part : (
+                                  <React.Fragment key={i}>
+                                    <br />
+                                    {'https://' + part}
+                                  </React.Fragment>
+                                )
+                              )}
+                            </div>
+                            <button
+                              className="ml-4 px-4 py-1 bg-[#1DA1F2] text-white rounded-full hover:bg-[#1a8cd8] transition-colors flex-shrink-0"
+                              onClick={() => {/* Tweet functionality will be added later */}}
+                            >
+                              Tweet
+                            </button>
+                          </div>
+                          <div className="mt-2 text-sm text-gray-500">
+                            {280 - tweet.length} characters remaining
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
