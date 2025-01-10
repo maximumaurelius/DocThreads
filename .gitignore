@@ -67,3 +67,7 @@ debug.log
 # Optional npm/yarn logs
 .npm
 .yarn-integrity
+
+# Vite
+dist
+dist-ssr
