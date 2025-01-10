@@ -1,21 +1,28 @@
 import { useState } from 'react'
+import { ClaudeService } from './services/claude'
 
 function App() {
   const [inputText, setInputText] = useState('')
   const [outputText, setOutputText] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | undefined>()
 
   const handleRemix = async () => {
     setIsLoading(true)
+    setError(undefined)
     try {
-      // TODO: Replace with actual Claude API call
-      // For now, just mock the response
-      setTimeout(() => {
-        setOutputText(`Remixed: ${inputText}`)
-        setIsLoading(false)
-      }, 1000)
+      const claudeService = new ClaudeService()
+      const response = await claudeService.remixContent({ content: inputText })
+      
+      if (response.error) {
+        setError(response.error)
+      } else {
+        setOutputText(response.remixedContent)
+      }
     } catch (error) {
       console.error('Error remixing content:', error)
+      setError(error instanceof Error ? error.message : 'An unknown error occurred')
+    } finally {
       setIsLoading(false)
     }
   }
@@ -47,6 +54,12 @@ function App() {
           >
             {isLoading ? 'Remixing...' : 'Remix Content'}
           </button>
+
+          {error && (
+            <div className="text-red-600 text-sm">
+              Error: {error}
+            </div>
+          )}
 
           {outputText && (
             <div>
