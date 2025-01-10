@@ -22,6 +22,8 @@ export const saveTweet = async (
   originalPrompt: string,
   caseId: string
 ): Promise<SavedTweet | null> => {
+  console.log('Attempting to save tweet:', { tweetContent, originalPrompt, caseId });
+  
   const { data, error } = await supabase
     .from('saved_tweets')
     .insert([
@@ -40,10 +42,13 @@ export const saveTweet = async (
     return null;
   }
 
+  console.log('Tweet saved successfully:', data);
   return data;
 };
 
 export const getSavedTweets = async (): Promise<SavedTweet[]> => {
+  console.log('Fetching saved tweets...');
+  
   const { data, error } = await supabase
     .from('saved_tweets')
     .select('*')
@@ -54,6 +59,7 @@ export const getSavedTweets = async (): Promise<SavedTweet[]> => {
     return [];
   }
 
+  console.log('Fetched tweets:', data);
   return data || [];
 };
 

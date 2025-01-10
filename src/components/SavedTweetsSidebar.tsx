@@ -6,26 +6,83 @@ interface SavedTweetsSidebarProps {
   onToggle: () => void;
 }
 
+interface GroupedTweets {
+  [caseId: string]: {
+    tweets: SavedTweet[];
+    originalPrompt: string;
+    isExpanded: boolean;
+    showFullCase: boolean;
+  };
+}
+
 export const SavedTweetsSidebar: React.FC<SavedTweetsSidebarProps> = ({ isOpen, onToggle }) => {
-  const [savedTweets, setSavedTweets] = useState<SavedTweet[]>([]);
+  const [groupedTweets, setGroupedTweets] = useState<GroupedTweets>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadSavedTweets();
-  }, []);
+    if (isOpen) {
+      loadSavedTweets();
+    }
+  }, [isOpen]);
 
   const loadSavedTweets = async () => {
     setLoading(true);
     const tweets = await getSavedTweets();
-    setSavedTweets(tweets);
+    
+    // Group tweets by case_id
+    const grouped = tweets.reduce((acc: GroupedTweets, tweet) => {
+      if (!acc[tweet.case_id]) {
+        acc[tweet.case_id] = {
+          tweets: [],
+          originalPrompt: tweet.original_prompt,
+          isExpanded: true,
+          showFullCase: false
+        };
+      }
+      acc[tweet.case_id].tweets.push(tweet);
+      return acc;
+    }, {});
+
+    setGroupedTweets(grouped);
     setLoading(false);
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string, caseId: string) => {
     const success = await deleteSavedTweet(id);
     if (success) {
-      setSavedTweets(tweets => tweets.filter(t => t.id !== id));
+      setGroupedTweets(prev => {
+        const newGrouped = { ...prev };
+        newGrouped[caseId].tweets = newGrouped[caseId].tweets.filter(t => t.id !== id);
+        
+        // Remove the case group if no tweets left
+        if (newGrouped[caseId].tweets.length === 0) {
+          delete newGrouped[caseId];
+        }
+        
+        return newGrouped;
+      });
     }
+  };
+
+  const toggleCase = (caseId: string) => {
+    setGroupedTweets(prev => ({
+      ...prev,
+      [caseId]: {
+        ...prev[caseId],
+        isExpanded: !prev[caseId].isExpanded
+      }
+    }));
+  };
+
+  const toggleFullCase = (caseId: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    setGroupedTweets(prev => ({
+      ...prev,
+      [caseId]: {
+        ...prev[caseId],
+        showFullCase: !prev[caseId].showFullCase
+      }
+    }));
   };
 
   const formatDate = (dateString: string) => {
@@ -34,6 +91,11 @@ export const SavedTweetsSidebar: React.FC<SavedTweetsSidebarProps> = ({ isOpen, 
       day: 'numeric',
       year: 'numeric',
     });
+  };
+
+  const truncateText = (text: string, maxLength: number) => {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
   };
 
   return (
@@ -66,37 +128,67 @@ export const SavedTweetsSidebar: React.FC<SavedTweetsSidebarProps> = ({ isOpen, 
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 space-y-6">
           {loading ? (
             <div className="flex justify-center items-center h-full">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
             </div>
-          ) : savedTweets.length === 0 ? (
+          ) : Object.keys(groupedTweets).length === 0 ? (
             <div className="text-center text-gray-500 mt-8">
               No saved tweets yet
             </div>
           ) : (
-            savedTweets.map((tweet) => (
-              <div
-                key={tweet.id}
-                className="bg-white rounded-lg border border-gray-200 p-4 group relative hover:shadow-md transition-shadow"
-              >
-                <div className="text-gray-800 mb-2">{tweet.tweet_content}</div>
-                <div className="flex justify-between items-center text-sm text-gray-500">
-                  <span>{formatDate(tweet.saved_at)}</span>
-                  <button
-                    onClick={() => handleDelete(tweet.id)}
-                    className="text-red-500 hover:text-red-700 transition-colors"
+            Object.entries(groupedTweets).map(([caseId, { tweets, originalPrompt, isExpanded, showFullCase }]) => (
+              <div key={caseId} className="border border-gray-200 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => toggleCase(caseId)}
+                  className="w-full p-4 bg-gray-50 flex justify-between items-center hover:bg-gray-100 transition-colors"
+                >
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900">Case Summary</div>
+                    <div className="text-sm text-gray-500 mt-1">
+                      {showFullCase ? originalPrompt : truncateText(originalPrompt, 100)}
+                      <button
+                        onClick={(e) => toggleFullCase(caseId, e)}
+                        className="ml-2 text-indigo-600 hover:text-indigo-800 font-medium"
+                      >
+                        {showFullCase ? 'Show less' : 'See more'}
+                      </button>
+                    </div>
+                  </div>
+                  <svg
+                    className={`w-5 h-5 text-gray-500 transform transition-transform ${
+                      isExpanded ? 'rotate-180' : ''
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                   >
-                    Delete
-                  </button>
-                </div>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
                 
-                {/* Hover tooltip for original prompt */}
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute left-full ml-2 bg-gray-800 text-white p-2 rounded-md text-sm w-64 pointer-events-none">
-                  <strong>Original Prompt:</strong>
-                  <p className="mt-1">{tweet.original_prompt}</p>
-                </div>
+                {isExpanded && (
+                  <div className="p-4 space-y-4 bg-white">
+                    {tweets.map((tweet) => (
+                      <div
+                        key={tweet.id}
+                        className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow"
+                      >
+                        <div className="text-gray-800 mb-2">{tweet.tweet_content}</div>
+                        <div className="flex justify-between items-center text-sm text-gray-500">
+                          <span>{formatDate(tweet.saved_at)}</span>
+                          <button
+                            onClick={() => handleDelete(tweet.id, caseId)}
+                            className="text-red-500 hover:text-red-700 transition-colors"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))
           )}

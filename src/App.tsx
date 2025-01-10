@@ -77,31 +77,48 @@ function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
-            Content Remixer
+        <div className="flex flex-col items-center justify-center mb-16 mt-8">
+          <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-4">
+            Dr. Threads
           </h1>
-          <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="p-2 rounded-lg bg-white/80 hover:bg-white/90 transition-colors shadow-sm"
-          >
-            <svg
-              className="w-6 h-6 text-gray-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          <p className="text-gray-600 text-lg">
+            Transforming clinical cases into bite-sized educational threads. Simplifying medicine, one post at a time.
+          </p>
+          <div className="absolute top-8 right-8 flex items-center space-x-3">
+            <a
+              href="https://twitter.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 rounded-lg hover:bg-white/10 transition-colors"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-          </button>
+              <svg viewBox="0 0 24 24" className="w-6 h-6 text-gray-600 opacity-80">
+                <path
+                  fill="currentColor"
+                  d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"
+                />
+              </svg>
+            </a>
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="flex items-center space-x-2 p-2 rounded-lg bg-white/80 hover:bg-white/90 transition-colors shadow-sm"
+            >
+              <span className="text-gray-600 font-medium">Saved Tweets</span>
+              <svg
+                className="w-6 h-6 text-gray-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
+          </div>
         </div>
-        
-        <p className="text-center text-gray-600 mb-12">Transform your content with AI-powered creativity</p>
         
         <div className="space-y-8 bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl">
           <div className="transition-all duration-200">
