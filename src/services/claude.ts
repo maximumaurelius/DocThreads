@@ -4,6 +4,7 @@ import Anthropic from '@anthropic-ai/sdk';
 export interface RemixRequest {
   content: string;
   style?: string;
+  temperature?: number;
 }
 
 export interface RemixResponse {
@@ -13,23 +14,25 @@ export interface RemixResponse {
 
 // Claude service class
 export class ClaudeService {
-  private client: Anthropic;
+  private anthropic: Anthropic;
 
   constructor() {
     const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
     if (!apiKey) {
       throw new Error('Anthropic API key is not set in environment variables');
     }
-    this.client = new Anthropic({
+    this.anthropic = new Anthropic({
       apiKey,
+      dangerouslyAllowBrowser: true
     });
   }
 
-  async remixContent({ content, style = 'creative' }: RemixRequest): Promise<RemixResponse> {
+  async remixContent({ content, style = 'creative', temperature = 1 }: RemixRequest): Promise<RemixResponse> {
     try {
-      const message = await this.client.messages.create({
-        model: 'claude-3-opus-20240229',
+      const message = await this.anthropic.messages.create({
+        model: 'claude-3-5-sonnet-20241022',
         max_tokens: 1024,
+        temperature,
         messages: [{
           role: 'user',
           content: `Please remix the following content in a ${style} style. Here's the content: ${content}`
@@ -37,12 +40,13 @@ export class ClaudeService {
       });
 
       // Get the response text from the message
-      const responseText = message.content[0].type === 'text' 
-        ? message.content[0].text 
-        : 'No text response received';
+      const remixedContent = message.content
+        .filter(block => block.type === 'text')
+        .map(block => block.text)
+        .join('\n\n');
 
       return {
-        remixedContent: responseText
+        remixedContent: remixedContent || 'No text response received'
       };
     } catch (error) {
       console.error('Error remixing content:', error);
