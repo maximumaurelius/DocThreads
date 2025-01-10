@@ -9,6 +9,11 @@ function App() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | undefined>()
 
+  const handleTweetClick = (tweet: string) => {
+    const tweetText = encodeURIComponent(tweet);
+    window.open(`https://twitter.com/intent/tweet?text=${tweetText}`, '_blank');
+  };
+
   const handleGenerateTweets = async () => {
     setIsLoading(true)
     setError(undefined)
@@ -44,13 +49,13 @@ function App() {
         <div className="space-y-8 bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl">
           <div className="transition-all duration-200">
             <label htmlFor="input" className="block text-sm font-medium text-gray-700 mb-2">
-              Input Text
+              Clinical Case
             </label>
             <textarea
               id="input"
               rows={6}
-              className="mt-1 block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-all duration-200 resize-none"
-              placeholder="Paste your text here..."
+              className="mt-1 block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-all duration-200 resize-none p-4"
+              placeholder="Paste your clinical case here..."
               value={caseReport}
               onChange={(e) => setCaseReport(e.target.value)}
             />
@@ -99,27 +104,29 @@ function App() {
                     <h3 className="text-gray-700 mb-3">Tweet {index + 1}:</h3>
                     {tweet && (
                       <div className="rounded-lg border border-gray-200 bg-white p-4">
-                        <div className="flex flex-col w-full">
-                          <div className="flex justify-between items-start gap-4">
-                            <div className="text-gray-800 whitespace-pre-line">
-                              {tweet.split('https://').map((part, i) => 
-                                i === 0 ? part : (
-                                  <React.Fragment key={i}>
-                                    <br />
-                                    {'https://' + part}
-                                  </React.Fragment>
-                                )
-                              )}
+                        <div className="flex flex-col w-full h-full">
+                          <div className="text-gray-800 whitespace-pre-line">
+                            {tweet.split('https://').map((part, i) => 
+                              i === 0 ? part : (
+                                <React.Fragment key={i}>
+                                  <br />
+                                  {'https://' + part}
+                                </React.Fragment>
+                              )
+                            )}
+                          </div>
+                          <div className="flex justify-between items-center mt-4">
+                            <div className="text-sm text-gray-500">
+                              {280 - tweet.length} characters remaining
                             </div>
                             <button
-                              className="ml-4 px-4 py-1 bg-[#1DA1F2] text-white rounded-full hover:bg-[#1a8cd8] transition-colors flex-shrink-0"
-                              onClick={() => {/* Tweet functionality will be added later */}}
+                              className="p-1.5 bg-transparent hover:bg-gray-100 transition-colors flex-shrink-0 rounded-full"
+                              onClick={() => handleTweetClick(tweet)}
                             >
-                              Tweet
+                              <svg viewBox="0 0 24 24" className="h-4 w-4 fill-black">
+                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                              </svg>
                             </button>
-                          </div>
-                          <div className="mt-2 text-sm text-gray-500">
-                            {280 - tweet.length} characters remaining
                           </div>
                         </div>
                       </div>
