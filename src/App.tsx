@@ -1,6 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import React from 'react'
 import { ClaudeService } from './services/claude'
+import { saveTweet } from './services/supabase'
+import { SavedTweetsSidebar } from './components/SavedTweetsSidebar'
+import { v4 as uuidv4 } from 'uuid'
 
 function App() {
   const [caseReport, setCaseReport] = useState('')
@@ -8,15 +11,48 @@ function App() {
   const [focusArea, setFocusArea] = useState<'learning_points' | 'pathophysiology' | 'both'>('both')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | undefined>()
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    // Get the saved preference from localStorage, default to false
+    const saved = localStorage.getItem('savedTweetsSidebarOpen')
+    return saved ? JSON.parse(saved) : false
+  })
+  const [currentCaseId, setCurrentCaseId] = useState<string>('')
+
+  // Save sidebar state to localStorage
+  useEffect(() => {
+    localStorage.setItem('savedTweetsSidebarOpen', JSON.stringify(isSidebarOpen))
+  }, [isSidebarOpen])
 
   const handleTweetClick = (tweet: string) => {
     const tweetText = encodeURIComponent(tweet);
     window.open(`https://twitter.com/intent/tweet?text=${tweetText}`, '_blank');
   };
 
+  const handleSaveTweet = async (tweet: string) => {
+    if (!currentCaseId) return;
+    
+    try {
+      await saveTweet(tweet, caseReport, currentCaseId);
+      // Show success message
+      const notification = document.getElementById('save-notification');
+      if (notification) {
+        notification.classList.remove('opacity-0');
+        setTimeout(() => {
+          notification.classList.add('opacity-0');
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Error saving tweet:', error);
+      setError('Failed to save tweet');
+    }
+  };
+
   const handleGenerateTweets = async () => {
     setIsLoading(true)
     setError(undefined)
+    // Generate a new case ID for this batch of tweets
+    setCurrentCaseId(uuidv4())
+    
     try {
       const claudeService = new ClaudeService()
       const response = await claudeService.generateMedicalTweets({ 
@@ -41,9 +77,30 @@ function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-4xl font-extrabold text-center mb-2 text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
-          Content Remixer
-        </h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
+            Content Remixer
+          </h1>
+          <button
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="p-2 rounded-lg bg-white/80 hover:bg-white/90 transition-colors shadow-sm"
+          >
+            <svg
+              className="w-6 h-6 text-gray-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+        </div>
+        
         <p className="text-center text-gray-600 mb-12">Transform your content with AI-powered creativity</p>
         
         <div className="space-y-8 bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl">
@@ -119,14 +176,24 @@ function App() {
                             <div className="text-sm text-gray-500">
                               {280 - tweet.length} characters remaining
                             </div>
-                            <button
-                              className="p-1.5 bg-transparent hover:bg-gray-100 transition-colors flex-shrink-0 rounded-full"
-                              onClick={() => handleTweetClick(tweet)}
-                            >
-                              <svg viewBox="0 0 24 24" className="h-4 w-4 fill-black">
-                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                              </svg>
-                            </button>
+                            <div className="flex space-x-2">
+                              <button
+                                className="p-1.5 bg-transparent hover:bg-gray-100 transition-colors flex-shrink-0 rounded-full"
+                                onClick={() => handleSaveTweet(tweet)}
+                              >
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                                </svg>
+                              </button>
+                              <button
+                                className="p-1.5 bg-transparent hover:bg-gray-100 transition-colors flex-shrink-0 rounded-full"
+                                onClick={() => handleTweetClick(tweet)}
+                              >
+                                <svg viewBox="0 0 24 24" className="h-4 w-4 fill-black">
+                                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                                </svg>
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -134,15 +201,23 @@ function App() {
                   </div>
                 ))}
               </div>
-              {tweets.includes('Pick the vibe') && (
-                <p className="mt-3 text-sm text-gray-600 italic">
-                  Pick the vibe that resonates with you! I aimed to maintain the enthusiastic spirit while polishing the spelling and adding some flair.
-                </p>
-              )}
             </div>
           )}
         </div>
       </div>
+
+      {/* Save notification */}
+      <div
+        id="save-notification"
+        className="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg opacity-0 transition-opacity duration-300"
+      >
+        Tweet saved successfully!
+      </div>
+
+      <SavedTweetsSidebar
+        isOpen={isSidebarOpen}
+        onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+      />
     </div>
   )
 }
