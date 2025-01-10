@@ -2,25 +2,30 @@ import { useState } from 'react'
 import { ClaudeService } from './services/claude'
 
 function App() {
-  const [inputText, setInputText] = useState('')
-  const [outputText, setOutputText] = useState('')
+  const [caseReport, setCaseReport] = useState('')
+  const [tweets, setTweets] = useState<string[]>([])
+  const [focusArea, setFocusArea] = useState<'learning_points' | 'pathophysiology' | 'both'>('both')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | undefined>()
 
-  const handleRemix = async () => {
+  const handleGenerateTweets = async () => {
     setIsLoading(true)
     setError(undefined)
     try {
       const claudeService = new ClaudeService()
-      const response = await claudeService.remixContent({ content: inputText })
+      const response = await claudeService.generateMedicalTweets({ 
+        caseReport,
+        focusArea,
+        tweetCount: 3
+      })
       
       if (response.error) {
         setError(response.error)
       } else {
-        setOutputText(response.remixedContent)
+        setTweets(response.tweets)
       }
     } catch (error) {
-      console.error('Error remixing content:', error)
+      console.error('Error generating tweets:', error)
       setError(error instanceof Error ? error.message : 'An unknown error occurred')
     } finally {
       setIsLoading(false)
@@ -45,15 +50,15 @@ function App() {
               rows={6}
               className="mt-1 block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-all duration-200 resize-none"
               placeholder="Paste your text here..."
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
+              value={caseReport}
+              onChange={(e) => setCaseReport(e.target.value)}
             />
           </div>
 
           <div className="flex justify-center">
             <button
-              onClick={handleRemix}
-              disabled={isLoading || !inputText}
+              onClick={handleGenerateTweets}
+              disabled={isLoading || !caseReport}
               className="px-8 py-3 rounded-xl font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transform transition-all duration-200 hover:scale-105 active:scale-95 disabled:hover:scale-100"
             >
               {isLoading ? (
@@ -62,10 +67,10 @@ function App() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  <span>Remixing...</span>
+                  <span>Generating tweets...</span>
                 </div>
               ) : (
-                'Remix Content'
+                'Generate Tweets'
               )}
             </button>
           </div>
@@ -81,22 +86,20 @@ function App() {
             </div>
           )}
 
-          {outputText && (
+          {tweets.length > 0 && (
             <div className="transition-all duration-200">
               <label htmlFor="output" className="flex text-sm font-medium text-gray-700 mb-2 items-center">
-                Remixed Content:
+                Generated Tweets:
                 <span className="ml-1">✨</span>
               </label>
               <div className="mt-1 p-6 bg-white/90 rounded-xl border border-gray-200 shadow-sm space-y-3">
-                {outputText.split('\n').map((line, index) => (
-                  line.trim() && (
-                    <div key={index} className="text-gray-800">
-                      {line}
-                    </div>
-                  )
+                {tweets.map((tweet, index) => (
+                  <div key={index} className="text-gray-800">
+                    {tweet}
+                  </div>
                 ))}
               </div>
-              {outputText.includes('Pick the vibe') && (
+              {tweets.includes('Pick the vibe') && (
                 <p className="mt-3 text-sm text-gray-600 italic">
                   Pick the vibe that resonates with you! I aimed to maintain the enthusiastic spirit while polishing the spelling and adding some flair.
                 </p>
