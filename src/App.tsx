@@ -28,51 +28,79 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold text-center mb-8">Content Remixer</h1>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-4xl font-extrabold text-center mb-2 text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
+          Content Remixer
+        </h1>
+        <p className="text-center text-gray-600 mb-12">Transform your content with AI-powered creativity</p>
         
-        <div className="space-y-6">
-          <div>
-            <label htmlFor="input" className="block text-sm font-medium text-gray-700">
+        <div className="space-y-8 bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl">
+          <div className="transition-all duration-200">
+            <label htmlFor="input" className="block text-sm font-medium text-gray-700 mb-2">
               Input Text
             </label>
             <textarea
               id="input"
               rows={6}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-xl border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-all duration-200 resize-none"
               placeholder="Paste your text here..."
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
             />
           </div>
 
-          <button
-            onClick={handleRemix}
-            disabled={isLoading || !inputText}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400"
-          >
-            {isLoading ? 'Remixing...' : 'Remix Content'}
-          </button>
+          <div className="flex justify-center">
+            <button
+              onClick={handleRemix}
+              disabled={isLoading || !inputText}
+              className="px-8 py-3 rounded-xl font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transform transition-all duration-200 hover:scale-105 active:scale-95 disabled:hover:scale-100"
+            >
+              {isLoading ? (
+                <div className="flex items-center space-x-2">
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>Remixing...</span>
+                </div>
+              ) : (
+                'Remix Content'
+              )}
+            </button>
+          </div>
 
           {error && (
-            <div className="text-red-600 text-sm">
-              Error: {error}
+            <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
+              <div className="flex items-center">
+                <svg className="h-5 w-5 text-red-500 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+                <span className="text-red-700">{error}</span>
+              </div>
             </div>
           )}
 
           {outputText && (
-            <div>
-              <label htmlFor="output" className="block text-sm font-medium text-gray-700">
-                Remixed Output
+            <div className="transition-all duration-200">
+              <label htmlFor="output" className="flex text-sm font-medium text-gray-700 mb-2 items-center">
+                Remixed Content:
+                <span className="ml-1">✨</span>
               </label>
-              <textarea
-                id="output"
-                rows={6}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-white"
-                value={outputText}
-                readOnly
-              />
+              <div className="mt-1 p-6 bg-white/90 rounded-xl border border-gray-200 shadow-sm space-y-3">
+                {outputText.split('\n').map((line, index) => (
+                  line.trim() && (
+                    <div key={index} className="text-gray-800">
+                      {line}
+                    </div>
+                  )
+                ))}
+              </div>
+              {outputText.includes('Pick the vibe') && (
+                <p className="mt-3 text-sm text-gray-600 italic">
+                  Pick the vibe that resonates with you! I aimed to maintain the enthusiastic spirit while polishing the spelling and adding some flair.
+                </p>
+              )}
             </div>
           )}
         </div>
